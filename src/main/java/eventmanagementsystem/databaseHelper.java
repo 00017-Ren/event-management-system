@@ -15,9 +15,9 @@ import java.util.logging.Logger;
  */
 public class databaseHelper {
     
-    String dbConnect = "jdbc:mysql://localhost:3306/ems";
-    String dbUser = "root";
-    String dbPassword = "123456";
+    String dbConnect = "jdbc:sqlite:ems.db";
+//    String dbUser = "root";
+//    String dbPassword = "123456";
     
     java.sql.Connection mySqlConnection = null;
     
@@ -26,25 +26,11 @@ public class databaseHelper {
     public void connectDb(){
         try { 
             mySqlConnection =
-                    DriverManager.getConnection(dbConnect, dbUser, dbPassword);
-            //statement = mySqlConnection.createStatement();
+                    DriverManager.getConnection(dbConnect);
         } catch (SQLException ex) {
             Logger.getLogger(databaseHelper.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-//    public void createStatement(){
-//        try {
-//            statement = mySqlConnection.createStatement();
-//        } catch (SQLException ex) {
-//            Logger.getLogger(databaseHelper.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//        
-//        
-//    }
-
-
-    
 }
 
 
