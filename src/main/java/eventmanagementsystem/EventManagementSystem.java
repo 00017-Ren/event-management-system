@@ -21,7 +21,7 @@ public class EventManagementSystem {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         
         FlatLightLaf.setup();
 
@@ -30,6 +30,9 @@ public class EventManagementSystem {
         } catch (UnsupportedLookAndFeelException ex) {
             Logger.getLogger(EventManagementSystem.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        databaseHelper dbh = new databaseHelper();
+        dbh.initializeSchema();
 
         frmHome home = new frmHome();
         home.setLocationRelativeTo(null);
