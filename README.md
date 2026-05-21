@@ -27,5 +27,5 @@ I am updating this project to learn modern build tools and get familiar with **S
 - [x] Updated dependencies
 - [x] Created SQLite database file
 - [x] Updated database connection method
-- [ ] Updating SQL queries to use Prepared Statements (security improvements in progress).
+- [x] Updating SQL queries to use Prepared Statements (security improvements in progress).
 - [ ] Potential future UI improvements
