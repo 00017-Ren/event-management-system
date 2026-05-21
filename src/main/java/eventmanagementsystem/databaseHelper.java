@@ -53,7 +53,8 @@ public class databaseHelper {
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "event_id INTEGER, "
                 + "name TEXT, "
-                + "email TEXT"
+                + "email TEXT,"
+                + "contact TEXT"
                 + ")";
 
         String createVenuesTable = "CREATE TABLE IF NOT EXISTS venues ("

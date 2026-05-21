@@ -6,10 +6,7 @@ package eventmanagementsystem;
 
 
 import java.awt.HeadlessException;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
@@ -54,7 +51,6 @@ public class frmVenues extends javax.swing.JFrame {
         if (radBtnYes.isSelected()){
            availability = 1; 
         } else availability = 0;
-               
     }
     
     public void clearFields(){
@@ -81,149 +77,82 @@ public class frmVenues extends javax.swing.JFrame {
     }
     
     public void validateVenue(){
-        
+        dbh.connectDb();
         // Checks venues table if record of the current variables already exist
         // and sets boolean variable accordingly
-        ResultSet rs = null;
+        String query = "SELECT * FROM venues WHERE name = ? AND address = ? AND capacity = ? AND availability = ?";
         
-        try {
-            dbh.connectDb();
-            
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String query = "SELECT * FROM venues WHERE name='" + name + 
-                    "' AND address='" + address + 
-                    "' AND capacity='" + capacity + 
-                    "' AND availability='" + availability + "'";
-            
-            statement.execute(query);
-            rs = statement.getResultSet();
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(query)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, address);
+            pstmt.setString(3, capacity);
+            pstmt.setInt(4, availability);
+
+            ResultSet rs = pstmt.executeQuery();
             boolRecordExists = rs.next();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-                
-            }
-            catch (SQLException e) {
-                JOptionPane.showMessageDialog(
-                        null, "Connection string not closed " + e);
-            }
         }
     }
     
     public void createVenue(){
-        
+        dbh.connectDb();
         // Initiates INSERT query to db to create new venue row
-        try {
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
+        String queryInsert = "INSERT INTO venues (name, address, capacity, availability) VALUES (?, ?, ?, ?)";
+        
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(queryInsert)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, address);
+            pstmt.setString(3, capacity);
+            pstmt.setInt(4, availability);
             
-            String queryInsert = "INSERT INTO venues " + 
-                    "(name, address, capacity, availability)" + " VALUES ('" + 
-                    name + "', " + "'" +
-                    address + "', " + "'" +
-                    capacity + "', " + "'" +
-                    availability + "') ";
-            
-            statement.executeUpdate(queryInsert);
-            
+            pstmt.executeUpdate();
             JOptionPane.showMessageDialog(null, "Venue created successfully!");
-            
-                    
-        } 
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
     
     public void loadVenues(){
+        dbh.connectDb();
         // Selects all current entries from venues table
-
-        ResultSet rs = null;
+        String querySelect = "Select id, name FROM venues ORDER BY name ASC";
         
-        try {
-            
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select id, name "
-                    + "FROM venues ORDER BY name ASC";
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
+            ResultSet rs = pstmt.executeQuery();
             
             while(rs.next()){
                 comboVenues.addItem(rs.getString(2));
             }                    
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
         }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
-        }
-        
     }
     
     public void readSelectedVenue(){
-        
+        dbh.connectDb();
         // Set variables to the currently selected event in the combobox
         ResultSet rs = null;
-        
-        try {
 
+        String querySelect = "Select name, address, capacity, availability FROM venues WHERE id = ?";
+        
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
             name = comboVenues.getItemAt(comboVenues.getSelectedIndex());
             
             getVenueID();
-            
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select name, address, capacity, availability "
-                    + "FROM venues WHERE id =" + id;
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
-            
+
+            pstmt.setInt(1, id);
+            rs = pstmt.executeQuery();
+
             while(rs.next()){
-            name=rs.getString(1);
-            address=rs.getString(2);
-            capacity=rs.getString(3);
-            availability=rs.getInt(4);
+                name=rs.getString(1);
+                address=rs.getString(2);
+                capacity=rs.getString(3);
+                availability=rs.getInt(4);
             }
            
-        }
-            
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
     
@@ -238,105 +167,58 @@ public class frmVenues extends javax.swing.JFrame {
     }
     
     public void updateVenue(){
-        
+        dbh.connectDb();
         // Runs UPDATE query to amend the information
         // of an existing venue in the venues table
-        try {
-            
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String queryUpdate = "UPDATE venues " + 
-                    "SET name = '" + name + "', " +
-                    "address = '" + address + "', " +
-                    "capacity = '" + capacity + "', " +
-                    "availability = '" + availability + "' " + 
-                    "WHERE id = " + id;
-            
-            statement.executeUpdate(queryUpdate);
-            
-            JOptionPane.showMessageDialog(
-                        null, "Venue updated succesfully!");
-                    
-        }
-        catch (HeadlessException | SQLException e) {
+        String queryUpdate = "UPDATE venues SET name = ?, address = ?, capacity = ?, availability = ? WHERE id = ?";
+
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(queryUpdate)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, address);
+            pstmt.setString(3, capacity);
+            pstmt.setInt(4, availability);
+            pstmt.setInt(5, id);
+
+            pstmt.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Venue updated successfully!");
+        } catch (HeadlessException | SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
     
     public void deleteVenue(){
-        
-        // Runs DELETE query to remove an event from the events table
-        try {
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String queryDelete = "DELETE FROM venues " + 
-                    "WHERE id = " + id;
-            
-            statement.executeUpdate(queryDelete);
-            
-            JOptionPane.showMessageDialog(
-                        null, "Deleted succesfully!");
-                    
-        }
-        catch (HeadlessException | SQLException e) {
+        dbh.connectDb();
+        // Runs DELETE query to remove a venue from the venues table
+        String queryDelete = "DELETE FROM venues WHERE id = ?";
+
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(queryDelete)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
+        } catch (HeadlessException e) {
+            JOptionPane.showMessageDialog(null, e);
         }
     }
     
     public void getVenueID(){
-        
+        dbh.connectDb();
         // Retrieves the venue id of the current event 
-        // from the venues table to faciliatte further operations
+        // from the venues table to facilitate further operations
         ResultSet rs = null;
-        
-        try {
 
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select id "
-                    + "FROM venues WHERE name = '" + name + "'";
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
-            
+        String querySelect = "Select id FROM venues WHERE name = ?";
+
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
+            pstmt.setString(1, name);
+            rs = pstmt.executeQuery();
+
             while(rs.next()){
                 id = rs.getInt(1);
             }
            
-        }
-            
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (SQLException e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
         

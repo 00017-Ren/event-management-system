@@ -4,6 +4,7 @@
  */
 package eventmanagementsystem;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -75,112 +76,55 @@ public class frmAttendees extends javax.swing.JFrame {
     }
     
     public void loadEvents(){
+        dbh.connectDb();
         // Selects all current entries from events table
+        String querySelect = "Select id, name FROM events ORDER BY date ASC";
 
-        ResultSet rs = null;
-        
-        try {
-            
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select id, name "
-                    + "FROM events ORDER BY date ASC";
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
+            ResultSet rs = pstmt.executeQuery();
             
             while(rs.next()){
                 comboEvents.addItem(rs.getString(2));
             }
-
-                    
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
         }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (Exception e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
-        }
-        
     }
     
     public void registerAttendee(){
-        
+        dbh.connectDb();
         // Runs INSERT query to create new entry in attendee table
-        try {
-            
-            
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String queryInsert = "INSERT INTO attendees " + 
-                    "(name, email, contact, event_id)" + 
-                    " VALUES ('" + 
-                    name + "', " + "'" +
-                    email + "', " + "'" +
-                    number + "', " + "'" +
-                    event_id + "') ";
-            
-            statement.executeUpdate(queryInsert);
-            JOptionPane.showMessageDialog(null, 
-                    "Registration successfully!");
-            
-                
-            }
-            catch (Exception e) {
-                JOptionPane.showMessageDialog(null, e);
-            }
-            finally {
-                try {
-                    statement.close();
-                }
-                catch (Exception e){
-                    JOptionPane.showMessageDialog(null, 
-                            "Connection string not closed " + e);
-                }
+        String queryInsert = "INSERT INTO attendees (name, email, contact, event_id) VALUES (?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(queryInsert)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.setString(3, number);
+            pstmt.setInt(4, event_id);
+            pstmt.executeUpdate();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e);
         }
     }
     
     public void validateRegistration(){
-        
+        dbh.connectDb();
         // Checks attendees table if record of current variables exists
         // and sets boolean variable accordingly
         ResultSet rs = null;
+
+        String query = "SELECT * FROM attendees WHERE name = ? AND email = ? AND contact = ? AND event_id = ?";
         
-        try {
-            dbh.connectDb();
-            
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String query = "SELECT * FROM attendees WHERE "
-                    + "name='" + name + "' AND "
-                    + "email='" + email + "' AND "
-                    + "contact='" + number + "' AND "
-                    + "event_id='" + event_id + "'";
-            
-            statement.execute(query);
-            rs = statement.getResultSet();
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(query)) {
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+            pstmt.setString(3, number);
+            pstmt.setInt(4, event_id);
+            rs = pstmt.executeQuery();
+
             boolRecordExists = rs.next();
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-                
-            }
-            catch (SQLException e) {
-                JOptionPane.showMessageDialog(
-                        null, "Connection string not closed " + e);
-            }
         }
     }
     
@@ -204,85 +148,49 @@ public class frmAttendees extends javax.swing.JFrame {
         else {
             emailPhoneFormatIsGood=true;
         }
-        
-        
     }
     
     public void getEventID(){
-        
+        dbh.connectDb();
         // Retrieves the event id of the current event 
-        // from the events table to faciliatte further operations
+        // from the events table to facilitate further operations
         ResultSet rs = null;
-        
-        try {
 
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select id "
-                    + "FROM events WHERE name = '" + event_name + "'";
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
+        String querySelect = "Select id FROM events WHERE name = ?";
+        
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
+            pstmt.setString(1, event_name);
+            rs = pstmt.executeQuery();
             
             while(rs.next()){
                 event_id = rs.getInt(1);
             }
            
-        }
-            
-        catch (Exception e) {
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (Exception e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
     
     public void readSelectedEvent(){
-        
+        dbh.connectDb();
         // Set event variable to the currently selected event in the combobox
         // Set variable data to text field
-        ResultSet rs = null;
+        String querySelect = "Select name FROM events WHERE id = ?";
         
-        try {
-
+        try (PreparedStatement pstmt = dbh.mySqlConnection.prepareStatement(querySelect)) {
             event_name = comboEvents.getSelectedItem().toString();
             
             getEventID();
             
-            dbh.connectDb();
-            statement = dbh.mySqlConnection.createStatement();
-            
-            String querySelect = "Select name "
-                    + "FROM events WHERE id =" + event_id;
-            
-            statement.execute(querySelect);
-            rs = statement.getResultSet();
+            pstmt.setInt(1, event_id);
+
+            ResultSet rs = pstmt.executeQuery();
             
             while(rs.next()){
                 editTxtAttEvent.setText(rs.getString(1));
             }
-           
-        }
-            
-        catch (Exception e) {
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e);
-        }
-        finally {
-            try {
-                statement.close();
-            }
-            catch (Exception e){
-                JOptionPane.showMessageDialog(null, 
-                        "Connection string not closed " + e);
-            }
         }
     }
     
